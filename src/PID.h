@@ -18,6 +18,13 @@ public:
   double Kd;
 
   /*
+  * static variables
+  */
+  double oldCte;
+  double sumCte;
+  bool firstMeasurement;
+
+  /*
   * Constructor
   */
   PID();
