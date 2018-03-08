@@ -34,8 +34,12 @@ int main()
 
   PID pid;
   // TODO: Initialize the pid variable.
-
+#ifdef UWS_VCPKG
+  h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> *ws, char *data, size_t length, uWS::OpCode opCode) {
+#else
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length, uWS::OpCode opCode) {
+#endif
+
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
@@ -66,12 +70,24 @@ int main()
           msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           std::cout << msg << std::endl;
-          ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#ifdef UWS_VCPKG
+		  // code fixed for latest uWebSockets
+		  ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#else
+		  // leave original code here
+		  ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#endif
         }
       } else {
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
-        ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#ifdef UWS_VCPKG
+		// code fixed for latest uWebSockets
+		ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#else
+		// leave original code here
+		ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#endif
       }
     }
   });
@@ -91,17 +107,36 @@ int main()
     }
   });
 
+#ifdef UWS_VCPKG
+  // code fixed for latest uWebSockets
+  h.onConnection([&h](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req) {
+#else
+  // leave original code here
   h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
+#endif
     std::cout << "Connected!!!" << std::endl;
   });
 
+#ifdef UWS_VCPKG
+  // code fixed for latest uWebSockets
+  h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> *ws, int code, char *message, size_t length) {
+#else
+  // leave original code here
   h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code, char *message, size_t length) {
-    ws.close();
+#endif
+
+#ifdef UWS_VCPKG
+	  // code fixed for latest uWebSockets
+	  ws->close();
+#else
+	  // leave original code here
+	  ws.close();
+#endif
     std::cout << "Disconnected" << std::endl;
   });
 
   int port = 4567;
-  if (h.listen(port))
+  if (h.listen("127.0.0.1", port))
   {
     std::cout << "Listening to port " << port << std::endl;
   }
