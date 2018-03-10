@@ -17,6 +17,7 @@ double rad2deg(double x) { return x * 180 / pi(); }
 int loop_count;
 int stuck_count;
 bool firstRun = true;
+bool useTwiddle = false;
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -42,7 +43,7 @@ int main()
 
   PID pid;
   // TODO: Initialize the pid variable.
-  pid.Init(.2, .004, 3);
+  pid.Init(.826, .00406, 6.16);
 
 
   loop_count = 0;
@@ -124,18 +125,21 @@ int main()
           msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
           
-		  if (loop_count >= MAX_STEPS || stuck_count >10)
+		  if(useTwiddle)
 		  {
-			  //reset the simulator
+			  if (loop_count >= MAX_STEPS || stuck_count >10)
+			  {
+				  //reset the simulator
 
-			  msg = "42[\"reset\",{}]"; // thanks to https://discussions.udacity.com/t/how-to-implement-twiddle-optimisation/279749/13
-			  loop_count = 0;
-			  stuck_count = 0;
-			  pid.Twiddle();
-		  }
-		  else
-		  {
-			  loop_count++;
+				  msg = "42[\"reset\",{}]"; // thanks to https://discussions.udacity.com/t/how-to-implement-twiddle-optimisation/279749/13
+				  loop_count = 0;
+				  stuck_count = 0;
+				  pid.Twiddle();
+			  }
+			  else
+			  {
+				  loop_count++;
+			  }
 		  }
 
 		  //std::cout << msg << std::endl;
