@@ -22,7 +22,22 @@ public:
   */
   double oldCte;
   double sumCte;
+
   bool firstMeasurement;
+
+  double mse;
+  double count;
+  double bestError;
+  int pidIndex = 0;
+  double bestPid[3];
+  double dPid[3] = { 1,.01,1 };
+
+
+
+  enum twiddleStates { twiddleState_Increment, twiddleState_Decrement, twiddleState_ReduceStep, twiddleState_Initial};
+  twiddleStates currentSate = twiddleState_Initial;
+  twiddleStates nextState;
+
 
   /*
   * Constructor
@@ -48,6 +63,11 @@ public:
   * Calculate the total PID error.
   */
   double TotalError();
+
+  void UpdateMse(double cte);
+  void Twiddle();
+  void ResetPid(double Kp, double Ki, double Kd);
+  void IncrementPidIndex();
 };
 
 #endif /* PID_H */

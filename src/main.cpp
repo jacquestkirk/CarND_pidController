@@ -4,6 +4,8 @@
 #include "PID.h"
 #include <math.h>
 
+#define MAX_STEPS  1500
+
 // for convenience
 using json = nlohmann::json;
 
@@ -11,6 +13,10 @@ using json = nlohmann::json;
 constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
+
+int loop_count;
+int stuck_count;
+bool firstRun = true;
 
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
@@ -28,6 +34,8 @@ std::string hasData(std::string s) {
   return "";
 }
 
+
+
 int main()
 {
   uWS::Hub h;
@@ -35,6 +43,11 @@ int main()
   PID pid;
   // TODO: Initialize the pid variable.
   pid.Init(.2, .004, 3);
+
+
+  loop_count = 0;
+  stuck_count = 0;
+
 
 #ifdef UWS_VCPKG
   h.onMessage([&pid](uWS::WebSocket<uWS::SERVER> *ws, char *data, size_t length, uWS::OpCode opCode) {
@@ -45,13 +58,28 @@ int main()
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
-    if (length && length > 2 && data[0] == '4' && data[1] == '2')
+    
+	  if (firstRun)
+	  {
+		  firstRun = false;
+		  std::string msg = "42[\"reset\",{}]"; // thanks to https://discussions.udacity.com/t/how-to-implement-twiddle-optimisation/279749/13
+#ifdef UWS_VCPKG
+										 // code fixed for latest uWebSockets
+		  ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#else
+										 // leave original code here
+		  ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
+#endif
+	  }
+	  
+	if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
       auto s = hasData(std::string(data).substr(0, length));
       if (s != "") {
         auto j = json::parse(s);
         std::string event = j[0].get<std::string>();
         if (event == "telemetry") {
+
           // j[1] is the data JSON object
           double cte = std::stod(j[1]["cte"].get<std::string>());
           double speed = std::stod(j[1]["speed"].get<std::string>());
@@ -66,9 +94,10 @@ int main()
 
 		  pid.UpdateError(cte);
 		  steer_value = pid.TotalError();
+		  pid.UpdateMse(cte);
 
 		  // DEBUG
-		  std::cout << "CTE: " << cte << " Steering Value: " << steer_value << std::endl;
+		  //std::cout << "CTE: " << cte << " Steering Value: " << steer_value << "Loop Round: " <<loop_count<< std::endl;
 
 		  if (steer_value > 1)
 		  {
@@ -79,13 +108,37 @@ int main()
 			  steer_value = -1;
 		  }
           
-          
+		  //update stuck count
+		  if (speed < 0.05)
+		  {
+			  stuck_count++;
+		  }
+		  else
+		  {
+			  stuck_count = 0;
+		  }
+		  
 
           json msgJson;
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = 0.3;
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          
+		  if (loop_count >= MAX_STEPS || stuck_count >10)
+		  {
+			  //reset the simulator
+
+			  msg = "42[\"reset\",{}]"; // thanks to https://discussions.udacity.com/t/how-to-implement-twiddle-optimisation/279749/13
+			  loop_count = 0;
+			  stuck_count = 0;
+			  pid.Twiddle();
+		  }
+		  else
+		  {
+			  loop_count++;
+		  }
+
+		  //std::cout << msg << std::endl;
 #ifdef UWS_VCPKG
 		  // code fixed for latest uWebSockets
 		  ws->send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -93,7 +146,9 @@ int main()
 		  // leave original code here
 		  ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 #endif
+		  
         }
+		
       } else {
         // Manual driving
         std::string msg = "42[\"manual\",{}]";
@@ -130,7 +185,7 @@ int main()
   // leave original code here
   h.onConnection([&h](uWS::WebSocket<uWS::SERVER> ws, uWS::HttpRequest req) {
 #endif
-    std::cout << "Connected!!!" << std::endl;
+    //std::cout << "Connected!!!" << std::endl;
   });
 
 #ifdef UWS_VCPKG
