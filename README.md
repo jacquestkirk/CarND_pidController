@@ -1,3 +1,29 @@
+## Comments from Jason
+### Effect of each parameter
+Parameter|direction|effect|example
+| ------------- |:-------------:| -----:|-----:|
+P|high|large overshoot|(https://github.com/jacquestkirk/CarND_pidController/blob/master/videos/highP.mp4)
+P|low|drifts towards the outside of the track|(https://github.com/jacquestkirk/CarND_pidController/blob/master/videos/lowP.mp4)
+I|high|drifts towards the outside of the track| (https://github.com/jacquestkirk/CarND_pidController/blob/master/videos/HighI.mp4)
+I|low|drift then sudden correction|(https://github.com/jacquestkirk/CarND_pidController/blob/master/videos/LowI.mp4)
+D|high|unstable, steering angle oscillates back and forth|(https://github.com/jacquestkirk/CarND_pidController/blob/master/videos/HighD.mp4)
+D|low|a lot of overshoot|(https://github.com/jacquestkirk/CarND_pidController/blob/master/videos/Low%20D.mp4)
+
+Low D and large P have a similar effect of caussing the car to overshoot the 0 cte mark. Low P means the car has to get further away from the desired path before it gets pulled back in. This cause it to drift toward the outside of the curve (which actually does seem like more natural driving). Low I has a similar effect. A larger error is tolerated until P can ramp up and pull the car back in. A high D makes the system unstable, it pulls back too far each time, causing the steering angle to oscillate wildly. I'm not really sure why a high I behaves similarly to a low P. 
+
+### Hyperparameter choice
+
+Note: I wrote this up optimizing while running with Visual Studio and a debugger. I later realized that results are different when using bash. The writeup is based on the visual studio version, since I already have plots generated and the theory behind choosing the hyperparameters has not changed. 
+
+I used the twiddle algorithm to decide on optimial values for P, I, and D. The square sum of the cross-track error was used as the cost function. The twiddle algorithm can be enabled by setting the useTwiddle flag in line 20 of [main.cpp.](https://github.com/jacquestkirk/CarND_pidController/blob/master/src/main.cpp), and the algorithm is found in the PID::Twiddle() function in [PID.cpp](https://github.com/jacquestkirk/CarND_pidController/blob/master/src/PID.cpp).
+
+A reset occurs after MAX_STEPS steps (currently set to 1500). After which the next set of hyperparameters is run. 
+
+A plot of hyperparameters and MSE over time is shown below. 
+![alt text](https://github.com/jacquestkirk/CarND_pidController/blob/master/TwiddleParameters.jpg)
+
+## Original .md
+
 # CarND-Controls-PID
 Self-Driving Car Engineer Nanodegree Program
 
