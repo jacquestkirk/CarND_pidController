@@ -4,7 +4,7 @@
 #include "PID.h"
 #include <math.h>
 
-#define MAX_STEPS  1500
+#define MAX_STEPS  4000
 
 // for convenience
 using json = nlohmann::json;
@@ -43,7 +43,7 @@ int main()
 
   PID pid;
   // TODO: Initialize the pid variable.
-  pid.Init(.826, .00406, 6.16);
+  pid.Init(.306, .00213, 5.508);
 
 
   loop_count = 0;
@@ -129,6 +129,13 @@ int main()
 		  {
 			  if (loop_count >= MAX_STEPS || stuck_count >10)
 			  {
+				  //if stuck, peanalize based on how far you got
+				  if (stuck_count > 10)
+				  {
+					  double penalty = 100000 * MAX_STEPS / loop_count;
+					  pid.mse += penalty;
+					  //std::cout << "penalty: " << penalty << " MSE: " << pid.mse << "Loop Round: " << loop_count << std::endl;
+				  }
 				  //reset the simulator
 
 				  msg = "42[\"reset\",{}]"; // thanks to https://discussions.udacity.com/t/how-to-implement-twiddle-optimisation/279749/13
