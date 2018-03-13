@@ -22,6 +22,13 @@ A reset occurs after MAX_STEPS steps (currently set to 1500). After which the ne
 A plot of hyperparameters and MSE over time is shown below. 
 ![alt text](https://github.com/jacquestkirk/CarND_pidController/blob/master/TwiddleParameters.jpg)
 
+### Hyperparameter choice
+Other reflections:
+
+If I were to re-do this project I might choose a different cost function. For a smoother ride, we might peanalize sudden changes in steering angle at the expense of a higher CTE. For example, the last curve in the video is very choppy. I would probably get a car-sick driving in that car. 
+
+I would also have liked to add the dt term in calculating the derivative and integral. This would allow sensor information to come in at irregular intervals. Unfortunately, I was unable to find out how to pull a time value out of the json file. 
+
 ## Original .md
 
 # CarND-Controls-PID
